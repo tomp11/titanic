@@ -12,7 +12,7 @@ from sklearn.model_selection import cross_val_score,GridSearchCV
 import warnings
 warnings.filterwarnings('ignore')
 
-
+BASE_DIR = "C:\\Users\\tomp\\Desktop\\deep\\titanic"
 
 # In[2]:
 train = pd.read_csv(BASE_DIR + "\\input\\train.csv")
@@ -278,9 +278,9 @@ test = sc.transform(test)
 
 
 # In[34]:
-# from sklearn.model_selection import cross_val_score, StratifiedKFold
-# from sklearn.metrics import mean_squared_error
-# from sklearn.metrics import accuracy_score,classification_report, precision_recall_curve, confusion_matrix
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score,classification_report, precision_recall_curve, confusion_matrix
 
 
 
@@ -393,15 +393,86 @@ test = sc.transform(test)
 # XGBClassifier = XGBClassifier()
 # XGBClassifier.fit(x_train, y_train)
 # y_pred = XGBClassifier.predict(x_test)
+# print(y_pred)
 # XGBClassifier_accy = round(accuracy_score(y_pred, y_test), 3)
 # print(XGBClassifier_accy)
 
 
+# In[]:
+#LightGBM
+import lightgbm
+# lgbmClassifier = lightgbm.LGBMClassifier()
+# lgbmClassifier.fit(x_train, y_train)
+# y_pred = lgbmClassifier.predict(x_test)
+# lightgbm_accy = round(accuracy_score(y_pred, y_test), 3)
 
+#はい全部いらないー
+#インスタンスできないlgbm,fitじゃなくtrain
+# dtrain = lightgbm.Dataset(x_train, y_train)
+# dtest = lightgbm.Dataset(x_train, y_test, reference=dtrain)
+# params = {
+#         'objective': 'binary',
+#         'metric': 'auc',
+#         'learning_rate': 0.01,
+#         'reg_lambda': 0.5,
+#         'reg_alpha': 0.5,
+#         'colsample_bytree': 0.8,
+#         'seed': 123
+#         }
+# lgbmClassifier = lightgbm.train(params, dtrain)
+# y_pred = lgbmClassifier.predict(x_test)
+# def prob2one(prob):
+#     if prob <= 0.5:
+#         prob = 0
+#     elif prob > 0.5:
+#         prob = 1
+#     return prob
+# y_pred_onehot = np.array([prob2one(i) for i in y_pred])
+# lightgbm_accy = round(accuracy_score(y_pred_onehot, y_test), 3)
+# print(lightgbm_accy)
+
+
+
+
+# In[]:
+#LightGBM_grid
+# n_estimators = [75,100,120]
+# min_child_samples = [5,10,15,20,25]
+# learning_rate=[0.1, 0.01]
+# num_leaves = [29,30,31,32,33,34,35]
+# parameters = {
+# 'n_estimators':n_estimators,
+# 'min_child_samples':min_child_samples,
+# 'learning_rate':learning_rate,
+# 'num_leaves':num_leaves,
+# }
+# lgbm_grid = GridSearchCV(lgbmClassifier,
+#                         param_grid=parameters,
+#                         cv=StratifiedKFold(n_splits=20, shuffle=True),
+#                         n_jobs = -1
+#                         )
+# lgbm_grid.fit(x_train, y_train)
+# print(lgbm_grid.best_estimator_)
+# lgbm_grid = lgbm_grid.best_estimator_
+# y_pred = lgbm_grid.predict(x_test)
+# lgbm_grid_accy = round(accuracy_score(y_pred, y_test), 3)
+# print(lgbm_grid_accy)
+
+# In[]:
+#LightGBM_grid_most
+lgbm_grid_most = lightgbm.LGBMClassifier(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0,
+        importance_type='split', learning_rate=0.01, max_depth=-1,
+        min_child_samples=10, min_child_weight=0.001, min_split_gain=0.0,
+        n_estimators=75, n_jobs=-1, num_leaves=29, objective=None,
+        random_state=None, reg_alpha=0.0, reg_lambda=0.0, silent=True,
+        subsample=1.0, subsample_for_bin=200000, subsample_freq=0)
+lgbm_grid_most.fit(x_train, y_train)
+y_pred = lgbm_grid_most.predict(x_test)
+lgbm_grid_most_accy = round(accuracy_score(y_pred, y_test), 3)
+print(lgbm_grid_most_accy)
 
 # In[42]:
-
-
+#使うモデル
 # all_models = [logreg, logreg_grid,
 #               knn, knn_grid,
 #               gaussian,
@@ -416,111 +487,89 @@ test = sc.transform(test)
 #               GaussianProcessClassifier,
 #               voting_classifier,
 #               ]
+use_models = [lgbmClassifier, lgbm_grid]
+c = {}
+for i in use_models:
+    a = i.predict(x_test)
+    b = accuracy_score(a, y_test)
+    c[i] = b
 
 
-
-# use_models = [logreg, logreg_grid,
-#               svc,
-#               randomforest, randomforest_grid,
-#               gradient,
-#               XGBClassifier,
-# ]
-
-
-# c = {}
-# for i in use_models:
-#     a = i.predict(x_test)
-#     b = accuracy_score(a, y_test)
-#     c[i] = b
 
 
 
 # In[43]:
+#機械学習csv
+test_prediction = (max(c, key=c.get)).predict(test)
+submission = pd.DataFrame({
+        "PassengerId": passengerid,
+        "Survived": test_prediction
+    })
 
-# test_prediction = (max(c, key=c.get)).predict(test)
-# submission = pd.DataFrame({
-#         "PassengerId": passengerid,
-#         "Survived": test_prediction
-#     })
-#
-# submission.PassengerId = submission.PassengerId.astype(int)
-# submission.Survived = submission.Survived.astype(int)
-#
-# submission.to_csv("titanic4_submission.csv", index=False)
+submission.PassengerId = submission.PassengerId.astype(int)
+submission.Survived = submission.Survived.astype(int)
 
-
-# In[44]:
+submission.to_csv("titanic9_submission.csv", index=False)
 
 
 # In[45]:
-
-import tensorflow as tf
-from tensorflow.train import GradientDescentOptimizer
-
-
-n_inputs = 40
-n_hidden1 =20
-n_hidden2 =10
-n_outputs =2
-
-learning_rate = 0.01
-
-n_epochs = 5000
-batch_size = 50
-
-X = tf.placeholder(tf.float32, shape=(None, n_inputs),name="X")
-Y = tf.placeholder(tf.int64, shape=(None),name="Y")
-
-# def neuron_layer(X, n_neurons, name, activation=None):
-#     n_inputs = int(X.get_shape()[1])
-#     stddev = 2 / np.sqrt(n_inputs)
-#     init = tf.truncated_normal((n_inputs, n_neurons), stddev=stddev)
-#     W = tf.Variable(init, name="kernel")
-#     b = tf.Variable(tf.zeros([n_neurons]), name="bias")
-#     Z = tf.matmul(X, W) + b
-#     if activation is not None:
-#         return activation(Z)
-#     else:
-#         return Z
-
-hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu)
-hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu)
-logits = tf.layers.dense(hidden2, n_outputs)
-
-xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=Y, logits=logits)
-loss = tf.reduce_mean(xentropy)
-
-optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9)
-training_op = optimizer.minimize(loss)
-
-correct = tf.nn.in_top_k(logits, Y, 1)
-accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
-
-init = tf.global_variables_initializer()
-
-
-
-def shuffle_batch(X, Y, batch_size):
-    rnd_idx = np.random.permutation(len(X))
-    n_batches = len(X) // batch_size
-    for batch_idx in np.array_split(rnd_idx, n_batches):
-        X_batch, y_batch = X[batch_idx], y[batch_idx]
-        yield X_batch, y_batch
-
-
-with tf.Session() as sess:
-    init.run()
-    for epoch in range(n_epochs):
-        sess.run(training_op, feed_dict={X: x_train, Y: y_train})
-        acc_batch = accuracy.eval(feed_dict={X: x_train, Y: y_train})
-        print(epoch, "Batch accuracy:", acc_batch)
-
-    train_pre = np.argmax(logits.eval(feed_dict={X:test}), axis=1)
-    #それぞれの確率を出したかったらsoftmax()
-    submission = pd.DataFrame({
-            "PassengerId": passengerid,
-            "Survived": train_pre,
-        })
-    submission.PassengerId = submission.PassengerId.astype(int)
-    submission.Survived = submission.Survived.astype(int)
-    submission.to_csv(BASE_DIR + "/" + "titanic7_submission.csv", index=False)
+#ディープ
+# import tensorflow as tf
+# from tensorflow.train import GradientDescentOptimizer
+#
+#
+# n_inputs = 40
+# n_hidden1 =20
+# n_hidden2 =10
+# n_outputs =2
+#
+# learning_rate = 0.01
+#
+# n_epochs = 5000
+# batch_size = 50
+#
+# X = tf.placeholder(tf.float32, shape=(None, n_inputs),name="X")
+# Y = tf.placeholder(tf.int64, shape=(None),name="Y")
+#
+#
+# hidden1 = tf.layers.dense(X, n_hidden1, activation=tf.nn.relu)
+# hidden2 = tf.layers.dense(hidden1, n_hidden2, activation=tf.nn.relu)
+# logits = tf.layers.dense(hidden2, n_outputs)
+#
+# xentropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=Y, logits=logits)
+# loss = tf.reduce_mean(xentropy)
+#
+# optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9)
+# training_op = optimizer.minimize(loss)
+#
+# correct = tf.nn.in_top_k(logits, Y, 1)
+# accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
+#
+# init = tf.global_variables_initializer()
+#
+#
+#
+# def shuffle_batch(X, Y, batch_size):
+#     rnd_idx = np.random.permutation(len(X))
+#     n_batches = len(X) // batch_size
+#     for batch_idx in np.array_split(rnd_idx, n_batches):
+#         X_batch, y_batch = X[batch_idx], y[batch_idx]
+#         yield X_batch, y_batch
+#
+#
+# with tf.Session() as sess:
+#     init.run()
+#     for epoch in range(n_epochs):
+#         sess.run(training_op, feed_dict={X: x_train, Y: y_train})
+#         acc_batch = accuracy.eval(feed_dict={X: x_train, Y: y_train})
+#         print(epoch, "Batch accuracy:", acc_batch)
+#
+#     train_pre = np.argmax(logits.eval(feed_dict={X:test}), axis=1)
+#     #それぞれの確率を出したかったらsoftmax()
+#     submission = pd.DataFrame({
+#             "PassengerId": passengerid,
+#             "Survived": train_pre,
+#         })
+#     submission.PassengerId = submission.PassengerId.astype(int)
+#     submission.Survived = submission.Survived.astype(int)
+    # submission.to_csv(BASE_DIR + "/" + "titanic7_submission.csv", index=False)

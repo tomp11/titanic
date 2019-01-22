@@ -10,9 +10,9 @@ import seaborn as sns
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import cross_val_score,GridSearchCV
 import warnings
-warnings.filterwarnings('ignore')
+# warnings.filterwarnings('ignore')
 
-BASE_DIR = "C:\\Users\\tomp\\Desktop\\deep\\titanic"
+BASE_DIR = "D:\\deep\\titanic"
 
 # In[2]:
 train = pd.read_csv(BASE_DIR + "\\input\\train.csv")
@@ -336,22 +336,28 @@ from sklearn.metrics import accuracy_score,classification_report, precision_reca
 
 # In[38]:
 # ランダムフォレスト
-# from sklearn.ensemble import RandomForestClassifier
-# randomforest = RandomForestClassifier(n_estimators=100,max_depth=9,min_samples_split=6, min_samples_leaf=4)
-# randomforest.fit(x_train, y_train)
-# y_pred = randomforest.predict(x_test)
-# random_accy = round(accuracy_score(y_pred, y_test), 3)
-# print(random_accy)
+from sklearn.ensemble import RandomForestClassifier
+randomforest = RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+            max_depth=10, max_features='auto', max_leaf_nodes=None,
+            min_impurity_decrease=0.0, min_impurity_split=None,
+            min_samples_leaf=4, min_samples_split=5,
+            min_weight_fraction_leaf=0.0, n_estimators=120, n_jobs=None,
+            oob_score=False, random_state=0, verbose=0, warm_start=False)
+randomforest.fit(x_train, y_train)
+y_pred = randomforest.predict(x_test)
+random_accy = round(accuracy_score(y_pred, y_test), 3)
+print(random_accy)
 
 
 
 
 # In[39]:
 #ランダムフォレスト＿グリッド
-# n_estimators = [10,25,50,75,100,120]
+# n_estimators = [50,75,100,120]
 # random_state = [0,15]
-# min_samples_split = [5,10,15,20,25]
-# max_depth = range(1,30)
+# min_samples_split = [5,6,10,15,20,25]
+# max_depth = [5,10,15,20,25,30]
+# min_samples_leaf=[2,3,4,5,6]
 # parameters = {'n_estimators':n_estimators,
 # 'random_state':random_state,
 # 'min_samples_split':min_samples_split,
@@ -370,7 +376,14 @@ from sklearn.metrics import accuracy_score,classification_report, precision_reca
 # y_pred = randomforest_grid.predict(x_test)
 # randomforest_grid_accy = round(accuracy_score(y_pred, y_test), 3)
 # print(randomforest_grid_accy)
-
+#
+# RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+#             max_depth=10, max_features='auto', max_leaf_nodes=None,
+#             min_impurity_decrease=0.0, min_impurity_split=None,
+#             min_samples_leaf=4, min_samples_split=5,
+#             min_weight_fraction_leaf=0.0, n_estimators=120, n_jobs=None,
+#             oob_score=False, random_state=0, verbose=0, warm_start=False)
+# 0.837
 
 
 
@@ -460,16 +473,16 @@ import lightgbm
 
 # In[]:
 #LightGBM_grid_most
-lgbm_grid_most = lightgbm.LGBMClassifier(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0,
-        importance_type='split', learning_rate=0.01, max_depth=-1,
-        min_child_samples=10, min_child_weight=0.001, min_split_gain=0.0,
-        n_estimators=75, n_jobs=-1, num_leaves=29, objective=None,
-        random_state=None, reg_alpha=0.0, reg_lambda=0.0, silent=True,
-        subsample=1.0, subsample_for_bin=200000, subsample_freq=0)
-lgbm_grid_most.fit(x_train, y_train)
-y_pred = lgbm_grid_most.predict(x_test)
-lgbm_grid_most_accy = round(accuracy_score(y_pred, y_test), 3)
-print(lgbm_grid_most_accy)
+# lgbm_grid_most = lightgbm.LGBMClassifier(boosting_type='gbdt', class_weight=None, colsample_bytree=1.0,
+#         importance_type='split', learning_rate=0.01, max_depth=-1,
+#         min_child_samples=10, min_child_weight=0.001, min_split_gain=0.0,
+#         n_estimators=75, n_jobs=-1, num_leaves=29, objective=None,
+#         random_state=None, reg_alpha=0.0, reg_lambda=0.0, silent=True,
+#         subsample=1.0, subsample_for_bin=200000, subsample_freq=0)
+# lgbm_grid_most.fit(x_train, y_train)
+# y_pred = lgbm_grid_most.predict(x_test)
+# lgbm_grid_most_accy = round(accuracy_score(y_pred, y_test), 3)
+# print(lgbm_grid_most_accy)
 
 # In[42]:
 #使うモデル
@@ -487,7 +500,7 @@ print(lgbm_grid_most_accy)
 #               GaussianProcessClassifier,
 #               voting_classifier,
 #               ]
-use_models = [lgbmClassifier, lgbm_grid]
+use_models = [randomforest,]
 c = {}
 for i in use_models:
     a = i.predict(x_test)
@@ -509,7 +522,7 @@ submission = pd.DataFrame({
 submission.PassengerId = submission.PassengerId.astype(int)
 submission.Survived = submission.Survived.astype(int)
 
-submission.to_csv("titanic9_submission.csv", index=False)
+submission.to_csv("titanic10_submission.csv", index=False)
 
 
 # In[45]:
